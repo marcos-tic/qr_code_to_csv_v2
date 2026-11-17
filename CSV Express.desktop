@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CSV Express
+GenericName=Conversor de PDF para CSV
+Comment=Extrai minutas de romaneios em PDF para CSV
+Exec="/home/marcos/Área de trabalho/pdf_para_csv/CSVExpress"
+TryExec=/home/marcos/Área de trabalho/pdf_para_csv/CSVExpress
+Icon=/home/marcos/Área de trabalho/pdf_para_csv/csv_express_ilustracao.png
+Path=/home/marcos/Área de trabalho/pdf_para_csv
+Terminal=false
+Categories=Office;
+StartupNotify=true

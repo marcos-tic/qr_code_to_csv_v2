@@ -1,0 +1,26 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Local build outputs and executables
+/build/
+/dist/
+/versao_windows/build/
+/versao_windows/dist/
+/CSVExpress
+/CSVExpress.exe
+/versao_windows/CSVExpress.exe
+*.spec.bak
+
+# Local source data and generated exports
+*.pdf
+*.csv
+*.zip
+
+# The Android client is maintained and published as a separate project
+/android/
+
+# Local workspace metadata
+/.agents/
+/.aws/
+/.codex/
