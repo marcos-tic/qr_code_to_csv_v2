@@ -2,11 +2,11 @@
 
 
 a = Analysis(
-    ['romaneio_express-v2.py'],
+    ['romaneio_express_v2.py'],
     pathex=[],
     binaries=[],
     datas=[('icone.png', '.'), ('csv_express_ilustracao.png', '.'), ('romaneio_express-v2.png', '.')],
-    hiddenimports=[],
+    hiddenimports=['romaneio_core'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

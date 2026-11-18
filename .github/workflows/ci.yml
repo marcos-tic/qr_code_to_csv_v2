@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+      - name: Compile Python modules
+        run: python -m compileall -q main.py main_windows.py romaneio_core.py romaneio_express_v2.py
+      - name: Package CSV Express
+        run: python -m PyInstaller --noconfirm --onefile --windowed --name CSVExpress --add-data "icone.png${{ runner.os == 'Windows' && ';' || ':' }}." --add-data "csv_express_ilustracao.png${{ runner.os == 'Windows' && ';' || ':' }}." main.py
+      - name: Package Romaneio Express V2
+        run: python -m PyInstaller --noconfirm --onefile --windowed --name RomaneioExpressV2 --add-data "romaneio_express-v2.png${{ runner.os == 'Windows' && ';' || ':' }}." romaneio_express_v2.py

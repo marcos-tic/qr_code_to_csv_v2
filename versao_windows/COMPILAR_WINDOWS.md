@@ -20,9 +20,9 @@ python --version
 
 ## 2. Abrir a pasta do projeto
 
-Copie a pasta `versao_windows` para o computador Windows. No Explorador de Arquivos, abra essa pasta, clique na barra de endereço, digite `cmd` e pressione Enter. O Prompt de Comando será aberto no local correto.
+Copie a pasta completa do projeto para o computador Windows. No Explorador de Arquivos, abra a pasta `versao_windows`, clique na barra de endereço, digite `cmd` e pressione Enter. O script sobe para a raiz do projeto, onde estão os módulos compartilhados.
 
-Confirme que estão presentes `main_windows.py`, `requirements.txt`, `icone.png`, `csv_express_ilustracao.png`, `app_icon.ico` e `compilar_windows.bat`:
+Confirme que estão presentes os arquivos `main_windows.py`, `romaneio_core.py`, `requirements.txt`, `icone.png`, `csv_express_ilustracao.png` e `versao_windows/compilar_windows.bat`:
 
 ```bat
 dir
@@ -37,7 +37,7 @@ py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
 ```
 
-O arquivo `requirements.txt` inclui PyInstaller, que empacota o programa, além das bibliotecas usadas pelo aplicativo.
+O arquivo `requirements.txt` inclui apenas as bibliotecas necessárias para executar o aplicativo. O script de compilação instala o PyInstaller separadamente.
 
 ## 4. Gerar o executável
 
@@ -47,7 +47,7 @@ Execute o script:
 compilar_windows.bat
 ```
 
-Ele instala as dependências, compila `main_windows.py` e copia o executável para a pasta atual. Ao final, o arquivo estará em:
+Ele instala as dependências, compila `main_windows.py` da raiz e copia o executável para `versao_windows`. Ao final, o arquivo estará em:
 
 ```text
 versao_windows\CSVExpress.exe
@@ -57,18 +57,19 @@ O PyInstaller também mantém uma cópia em `versao_windows\dist\CSVExpress.exe`
 
 ## Compilar manualmente
 
-Se preferir não usar o `.bat`, na pasta `versao_windows` execute:
+Se preferir não usar o `.bat`, na raiz do projeto execute:
 
 ```bat
 py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
-py -m PyInstaller --noconfirm --onefile --windowed --icon=app_icon.ico --add-data "icone.png;." --add-data "csv_express_ilustracao.png;." --name CSVExpress main_windows.py
+py -m pip install "pyinstaller>=6.0.0"
+py -m PyInstaller --noconfirm --onefile --windowed --paths . --icon=versao_windows\app_icon.ico --add-data "icone.png;." --add-data "csv_express_ilustracao.png;." --name CSVExpress main_windows.py
 ```
 
 Nesse caso, o executável fica em `dist\CSVExpress.exe`. Para copiá-lo também para a pasta atual:
 
 ```bat
-copy /Y dist\CSVExpress.exe .\CSVExpress.exe
+copy /Y dist\CSVExpress.exe .\versao_windows\CSVExpress.exe
 ```
 
 ## Problemas comuns

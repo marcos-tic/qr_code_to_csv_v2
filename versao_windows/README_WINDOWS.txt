@@ -2,10 +2,10 @@
    EXTRATOR DE MINUTAS (PDF -> CSV) - VERSAO WINDOWS
 =======================================================
 
-Arquivo fonte desta versão: main_windows.py
+Arquivo de entrada desta versão: main_windows.py (launcher da implementação compartilhada na pasta raiz)
 Ícone usado pelo app: icone.png
 Ilustração da aba Manual: csv_express_ilustracao.png
-(O arquivo original main.py foi mantido intacto).
+O arquivo romaneio_core.py precisa acompanhar os fontes para execução e compilação.
 
 COMO USAR NO WINDOWS:
 

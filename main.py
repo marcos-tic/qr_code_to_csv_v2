@@ -17,6 +17,7 @@ from typing import List, Tuple, Optional, Dict
 
 import pandas as pd
 import pdfplumber
+from romaneio_core import abrir_pasta, exportar_csv_linhas, extrair_minutas_pdf
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QByteArray, QRectF
 from PyQt6.QtGui import QColor, QFont, QIcon, QPixmap, QPainter, QPen, QDragEnterEvent, QDropEvent
@@ -2319,23 +2320,8 @@ def extrair_dados_pdf(caminho_pdf: Path) -> Tuple[List[str], str]:
     Extrai o texto completo do PDF, identifica a data do documento
     e localiza todas as minutas com base no padrão do romaneio.
     """
-    texto_completo = ""
-    with pdfplumber.open(caminho_pdf) as pdf:
-        for pagina in pdf.pages:
-            texto_completo += (pagina.extract_text() or "") + "\n"
-
-    # Busca a data no documento (dd/mm/aaaa)
-    match_data = re.search(r'(\d{2})/(\d{2})/(\d{4})', texto_completo)
-    if match_data:
-        dia, mes, ano = match_data.groups()
-        data_str = f"{dia}{mes}{ano}"
-    else:
-        data_str = datetime.now().strftime("%d%m%Y")
-
-    texto_limpo = limpar_texto(texto_completo)
-    minutas = re.findall(r'\b\d{6}\s*[-–—]\s*(\d+)\b', texto_limpo)
-
-    return minutas, data_str
+    minutas, data_str = extrair_minutas_pdf(caminho_pdf)
+    return minutas, data_str.replace("/", "")
 
 
 class ProcessadorThread(QThread):
@@ -2760,6 +2746,7 @@ class JanelaPrincipal(QMainWindow):
 
         self.btn_selecionar = QPushButton("📂 Selecionar PDF")
         self.btn_selecionar.setObjectName("btnPrimary")
+        self.btn_selecionar.setAccessibleName("Selecionar arquivos PDF")
         self.btn_selecionar.setToolTip("Escolha um ou mais arquivos PDF para extrair as minutas.")
         self.btn_selecionar.clicked.connect(self.abrir_seletor_arquivos)
         header_layout.addWidget(self.btn_selecionar)
@@ -2791,6 +2778,7 @@ class JanelaPrincipal(QMainWindow):
         # 4. Barra de Filtro e Busca
         filtro_layout = QHBoxLayout()
         self.campo_busca = QLineEdit()
+        self.campo_busca.setAccessibleName("Filtrar minutas por código ou arquivo de origem")
         self.campo_busca.setPlaceholderText("🔍 Filtrar minuta...")
         self.campo_busca.textChanged.connect(self.filtrar_tabela)
         filtro_layout.addWidget(self.campo_busca)
@@ -2808,6 +2796,7 @@ class JanelaPrincipal(QMainWindow):
         main_layout.addWidget(self.estado_vazio)
 
         self.tabela = QTableWidget()
+        self.tabela.setAccessibleName("Minutas extraídas dos arquivos PDF")
         self.tabela.setColumnCount(4)
         self.tabela.setHorizontalHeaderLabels(["#", "Minuta Extraída", "Arquivo de Origem", "Data"])
         self.tabela.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -2845,15 +2834,18 @@ class JanelaPrincipal(QMainWindow):
         botoes_layout.setSpacing(12)
 
         self.btn_limpar = QPushButton("🗑️ Limpar Lista")
+        self.btn_limpar.setAccessibleName("Limpar arquivos e resultados")
         self.btn_limpar.setToolTip("Remove os PDFs e resultados da sessão atual.")
         self.btn_limpar.clicked.connect(self.limpar_tudo)
 
         self.btn_abrir_pasta = QPushButton("📁 Abrir Pasta Destino")
+        self.btn_abrir_pasta.setAccessibleName("Abrir pasta do último CSV exportado")
         self.btn_abrir_pasta.setToolTip("Abre a pasta onde o último arquivo CSV foi salvo.")
         self.btn_abrir_pasta.setEnabled(False)
         self.btn_abrir_pasta.clicked.connect(self.abrir_pasta_destino)
 
         self.btn_exportar = QPushButton("💾 Exportar para CSV")
+        self.btn_exportar.setAccessibleName("Exportar minutas para arquivo CSV")
         self.btn_exportar.setObjectName("btnSuccess")
         self.btn_exportar.setToolTip("Salva as minutas extraídas em um arquivo CSV compatível com Excel.")
         self.btn_exportar.setEnabled(False)
@@ -3079,7 +3071,7 @@ class JanelaPrincipal(QMainWindow):
             return
 
         datas = [d["data"] for d in self.dados_carregados if d["data"]]
-        data_sugerida = datas[0] if datas else datetime.now().strftime("%d%m%Y")
+        data_sugerida = datas[0] if datas else "sem_data"
         nome_sugerido = f"minutas_extraidas_{data_sugerida}_qtd-{len(todas_minutas)}.csv"
 
         pasta_padrao = str(self.dados_carregados[0]["caminho"].parent)
@@ -3098,8 +3090,15 @@ class JanelaPrincipal(QMainWindow):
         if not caminho_salvar.lower().endswith(".csv"):
             caminho_salvar += ".csv"
 
-        df = pd.DataFrame({"Minuta": todas_minutas})
-        df.to_csv(caminho_salvar, index=False, encoding="utf-8-sig")
+        linhas = [
+            {"Minuta": minuta, "Arquivo de origem": d["nome"], "Data": d["data"]}
+            for d in self.dados_carregados for minuta in d["minutas"]
+        ]
+        try:
+            exportar_csv_linhas(Path(caminho_salvar), linhas)
+        except Exception as erro:
+            QMessageBox.critical(self, "Falha na exportação", f"Não foi possível salvar o CSV:\n{erro}")
+            return
 
         self.ultimo_csv_gerado = Path(caminho_salvar)
         self.btn_abrir_pasta.setEnabled(True)
@@ -3114,9 +3113,8 @@ class JanelaPrincipal(QMainWindow):
 
     def abrir_pasta_destino(self):
         if self.ultimo_csv_gerado and self.ultimo_csv_gerado.exists():
-            pasta = str(self.ultimo_csv_gerado.parent)
             try:
-                subprocess.Popen(["xdg-open", pasta])
+                abrir_pasta(self.ultimo_csv_gerado.parent)
             except Exception as e:
                 QMessageBox.warning(self, "Erro", f"Não foi possível abrir o gerenciador: {e}")
 
@@ -3124,16 +3122,22 @@ class JanelaPrincipal(QMainWindow):
 def executar_cli(arquivos: List[Path]):
     """Modo linha de comando rápido."""
     print("Modo Linha de Comando:")
+    erros = 0
     for arq in arquivos:
         if not arq.exists():
             print(f"Arquivo não encontrado: {arq}")
+            erros += 1
             continue
-        minutas, data_str = extrair_dados_pdf(arq)
-        qtd = len(minutas)
-        nome_csv = arq.parent / f"minutas_extraidas_{data_str}_qtd-{qtd}.csv"
-        df = pd.DataFrame({'Minuta': minutas})
-        df.to_csv(nome_csv, index=False, encoding='utf-8-sig')
-        print(f"✓ {arq.name}: {qtd} minutas salvas em {nome_csv}")
+        try:
+            minutas, data_str = extrair_dados_pdf(arq)
+            nome_csv = arq.parent / f"minutas_extraidas_{data_str or 'sem_data'}_qtd-{len(minutas)}.csv"
+            exportar_csv_linhas(nome_csv, [{"Minuta": m, "Arquivo de origem": arq.name, "Data": data_str} for m in minutas])
+            print(f"✓ {arq.name}: {len(minutas)} minutas salvas em {nome_csv}")
+        except Exception as erro:
+            erros += 1
+            print(f"✗ {arq.name}: {erro}", file=sys.stderr)
+    if erros:
+        sys.exit(1)
 
 
 def main():

@@ -5,9 +5,11 @@ Aplicativo portátil e moderno para leitura de romaneios em PDF e extração aut
 ## 🚀 Características
 - **Interface gráfica em PyQt6** com tema claro padrão, opção de tema escuro e suporte a arrastar e soltar (drag & drop).
 - **100% Portátil**: Arquivo único executável autônomo sem necessidade de instalar Python ou dependências.
-- **Cabeçalho formatado**: Gera o arquivo CSV com a coluna padronizada `Minuta`.
+- **Cabeçalho formatado**: Gera CSV com `Minuta`, arquivo de origem e data do documento.
 - **Codificação UTF-8 com BOM (`utf-8-sig`)**: Abre perfeitamente no Excel sem erros de caracteres.
 - **Suporte a Linha de Comando (CLI)** e processamento em lote.
+- PDFs sem camada de texto ou sem minutas reconhecidas são reportados como falha. Datas inválidas ou ausentes ficam vazias, sem usar a data atual como substituta.
+- O CLI continua processando os demais arquivos quando um PDF falha e termina com código de erro se houver falhas.
 
 ## 🧭 Layout do aplicativo
 
@@ -47,6 +49,11 @@ A aba Manual usa rolagem vertical para caber em janelas menores. No topo, aprese
 - **Interface Gráfica**: Abra `CSV Express.desktop` para iniciar com o ícone personalizado, ou execute `CSVExpress`.
 - **Linha de Comando**:
   ```bash
-  ./CSVExpress arquivo.pdf
+  ./CSVExpress arquivo.pdf outro.pdf
   ```
-Versao Linux e Windows
+
+O CSV do CLI inclui minuta, arquivo de origem e data encontrada no documento. `romaneio_core.py` contém a lógica compartilhada de extração, validação, exportação e abertura de pastas; mantenha-o junto aos pontos de entrada ao executar ou compilar.
+
+## Dependências
+
+Instale as dependências de execução com `python3 -m pip install -r requirements.txt`. Para gerar executáveis, instale também `pyinstaller>=6.0.0`. A pasta `versao_windows` contém launchers compatíveis com a estrutura antiga e usa os módulos da pasta raiz.

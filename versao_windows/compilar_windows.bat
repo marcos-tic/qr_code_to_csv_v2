@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 > nul
+cd /d "%~dp0.."
 title CSV Express - Gerador de Executável Windows (.EXE)
 
 echo ======================================================
@@ -21,6 +22,7 @@ if %errorlevel% neq 0 (
 echo [1/3] Instalando dependências necessárias...
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+python -m pip install "pyinstaller>=6.0.0"
 if %errorlevel% neq 0 (
     echo [ERRO] Falha ao instalar dependências.
     pause
@@ -28,8 +30,8 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [2/3] Compilando executável portátil (.exe) a partir de main_windows.py...
-python -m PyInstaller --noconfirm --onefile --windowed --icon=app_icon.ico --add-data "icone.png;." --add-data "csv_express_ilustracao.png;." --name "CSVExpress" main_windows.py
+echo [2/3] Compilando executável portátil (.exe) usando a implementação compartilhada...
+python -m PyInstaller --noconfirm --onefile --windowed --paths . --icon=versao_windows\app_icon.ico --add-data "icone.png;." --add-data "csv_express_ilustracao.png;." --name "CSVExpress" main_windows.py
 if %errorlevel% neq 0 (
     echo [ERRO] Falha na compilação do executável.
     pause
@@ -39,12 +41,12 @@ if %errorlevel% neq 0 (
 echo.
 echo [3/3] Finalizando e organizando arquivos...
 if exist "dist\CSVExpress.exe" (
-    copy /y "dist\CSVExpress.exe" ".\CSVExpress.exe" > nul
+    copy /y "dist\CSVExpress.exe" "versao_windows\CSVExpress.exe" > nul
     echo.
     echo ======================================================
     echo  SUCESSO TOTAL!
     echo  O executável portátil foi gerado:
-    echo  -^> CSVExpress.exe
+    echo  -^> versao_windows\CSVExpress.exe
     echo.
     echo  Basta dar 2 cliques no arquivo CSVExpress.exe para usar!
     echo ======================================================
